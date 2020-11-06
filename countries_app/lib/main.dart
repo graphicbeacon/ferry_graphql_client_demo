@@ -1,7 +1,8 @@
 import 'package:countries_client/graphql/countries.data.gql.dart';
 import 'package:flutter/material.dart';
-import 'package:ferry_exec/ferry_exec.dart';
 
+import 'package:ferry/ferry.dart';
+import 'package:ferry_flutter/ferry_flutter.dart';
 import 'package:countries_client/countries_client.dart';
 
 void main() {
@@ -23,31 +24,27 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
           title: Text('World Nations'),
         ),
-        body: Center(
-          child: StreamBuilder<
-              OperationResponse<GFetchCountriesData, GFetchCountriesVars>>(
-            stream: client.request(countriesReq),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
-              }
+        body: Operation(
+          client: client,
+          operationRequest: countriesReq,
+          builder: (context,
+              OperationResponse<GFetchCountriesData, GFetchCountriesVars>
+                  response) {
+            if (response.loading) {
+              return Center(child: CircularProgressIndicator());
+            }
 
-              if (snapshot.hasError) {
-                return Text(snapshot.error);
-              }
+            final countries = response.data.countries;
 
-              final results = snapshot.data.data.countries;
-
-              return ListView(
-                  children: results
-                      .map<Widget>((country) => ListTile(
-                            leading: Text('   ' + country.emoji),
-                            title: Text(country.name),
-                            subtitle: Text(country.capital ?? '---'),
-                          ))
-                      .toList());
-            },
-          ),
+            return ListView.builder(
+              itemCount: countries.length,
+              itemBuilder: (context, index) => ListTile(
+                leading: Text('   ' + countries[index].emoji),
+                title: Text(countries[index].name),
+                subtitle: Text(countries[index].capital ?? '---'),
+              ),
+            );
+          },
         ),
       ),
     );
